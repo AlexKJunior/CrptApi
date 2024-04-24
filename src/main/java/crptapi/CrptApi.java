@@ -1,6 +1,7 @@
 package crptapi;
 
 import com.google.gson.Gson;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -11,10 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-/**
- * Класс CrptApi предназначен для работы с API Честного знака.
- * Он поддерживает ограничение на количество запросов к API в заданный промежуток времени.
- */
+
 public class CrptApi {
     private final TimeUnit timeUnit;
     @SuppressWarnings("unused")
@@ -24,13 +22,6 @@ public class CrptApi {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final String apiUrl;
 
-    /**
-     * Конструктор класса CrptApi.
-     *
-     * @param timeUnit      единица времени для интервала запросов.
-     * @param requestLimit  максимальное количество запросов в заданный интервал времени.
-     * @param apiUrl        URL API для отправки запросов.
-     */
     public CrptApi(TimeUnit timeUnit, int requestLimit, String apiUrl) {
         this.timeUnit = timeUnit;
         this.requestLimit = requestLimit;
@@ -39,58 +30,31 @@ public class CrptApi {
         this.apiUrl = apiUrl;
     }
 
-    /**
-     * Метод для создания документа.
-     *
-     * @param document  документ для создания.
-     * @param signature подпись для документа.
-     * @throws InterruptedException если поток был прерван во время ожидания разрешения.
-     */
     public void createDocument(Document document, String signature) throws InterruptedException {
         semaphore.acquire();
         scheduler.scheduleAtFixedRate(() -> semaphore.release(), 1, 1, timeUnit);
         try {
             HttpRequest request = buildRequest(document, signature);
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            // Это пример обработки ответа от сервера, его можно изменить в зависимости от api.
-            // Проверяем статус ответа
             if (response.statusCode() == 200) {
-                // Обрабатываем тело ответа при успешном статусе
                 String responseBody = response.body();
-                // Здесь вы можете добавить код для обработки тела ответа
                 processResponseBody(responseBody);
             } else {
-                // Обрабатываем ошибку при неуспешном статусе
                 System.out.println("Ошибка: " + response.statusCode());
             }
-        }catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    /**
-     * Метод для обработки тела ответа.
-     *
-     * @param responseBody тело ответа для обработки.
-     */
     private void processResponseBody(String responseBody) {
-        // Здесь вы можете добавить код для обработки тела ответа
     }
 
-    /**
-     * Метод для остановки планировщика.
-     */
     public void shutdown() {
         scheduler.shutdown();
     }
 
-    /**
-     * Метод для построения HTTP-запроса.
-     *
-     * @param document  документ для создания запроса.
-     * @param signature подпись для документа.
-     * @return построенный HTTP-запрос.
-     */
+
     private HttpRequest buildRequest(Document document, String signature) {
         String json = convertToJson(document);
         HttpRequest request = HttpRequest.newBuilder()
@@ -101,20 +65,11 @@ public class CrptApi {
         return request;
     }
 
-    /**
-     * Метод для преобразования документа в JSON.
-     *
-     * @param document документ для преобразования.
-     * @return JSON-строка.
-     */
     private String convertToJson(Document document) {
         Gson gson = new Gson();
         return gson.toJson(document);
     }
 
-    /**
-     * Внутренний класс для представления документа.
-     */
     static class Document {
         private Description description;
         private String doc_id;
@@ -235,9 +190,6 @@ public class CrptApi {
         }
     }
 
-    /**
-     * Внутренний класс для представления описания.
-     */
     public class Description {
         private String participantInn;
 
@@ -250,9 +202,6 @@ public class CrptApi {
         }
     }
 
-    /**
-     * Внутренний класс для представления продукта.
-     */
     public class Product {
         private String certificate_document;
         private String certificate_document_date;
